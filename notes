@@ -1,0 +1,21 @@
+Path
+
+Folder Structure
+public/index.html
+server/server.js
+
+
+server.js
+
+const path=require('path');
+const publicPath=path.join(__dirname,'../public');
+
+console.log(__dirname+'../public');
+//__dirname->server
+
+console.log(publicPath);
+
+output:
+sysadmin@AcubeL020:/var/www/html/node-chat-app$ node server/server.js
+/var/www/html/node-chat-app/server../public
+/var/www/html/node-chat-app/public
