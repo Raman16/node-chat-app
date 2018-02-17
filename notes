@@ -252,3 +252,222 @@ New User Connected...
 
 
 note:from above thing we can understand socket.io is as a two communication of client an server.
+
+
+Emitting and listening to events
+Check video 108
+
+
+
+Email App example:
+
+server                                                                     client
+emit event         newEmailEvent(sends text,from,created at)               Listen for Event
+Listen for event   createEmailEvent(sends text,from,created at)            emit event
+
+
+server.js
+const path=require('path');
+const publicPath=path.join(__dirname,'../public');
+const port=process.env.PORT || 4030;
+
+const express=require('express');
+const http=require('http');
+const socketIO=require('socket.io');
+
+
+var app=express();
+var server=http.createServer(app);
+var io=socketIO(server);
+//using io now we can communicate between client and server
+app.use(express.static(publicPath));
+
+
+//io.on:  lets us register an event listenner
+
+io.on('connection',(socket)=>{  //this socket argument is similar to we acces in index.html
+    //connection->makes a new connection.
+    console.log('New User Connected...');
+
+   socket.emit('newEmail',{  //custom event  //event emitter  //from server to client
+       From:'winslet@example.com',
+       Text:"Hello Winslet"
+   })
+
+   socket.on('createEmail',(newEmail)=>{ //custom event from client to server
+      console.log(newEmail);
+   });
+    socket.on('disconnect',(socket)=>{
+        console.log('User was disconnected....');
+    })
+});
+server.listen(port,()=>{
+    console.log(`server is up on ${port}`);
+})
+
+
+
+public/index.js
+var socket =io();//initiating a create from client to the server to open a 
+//websocket and keep that connection open.
+
+
+socket.on('connect',function(){  //event fired  //if we use arrow funtion it will crash on mobile/in other device...
+    console.log('connected to server');
+
+    socket.emit('createEmail',{
+        To:'raman@gmail.com',
+        Text:'Learn Socket.IO'
+    });
+
+});
+
+socket.on('newEmail',function(email){  //event lintener
+   console.log(email);
+})
+
+socket.on('disconnect',function(){
+    console.log('disconnecte server.......');
+})
+
+
+index.html
+<html>
+<head>
+ <meta charset="utf-8">
+</head>
+<body>
+ <p>Welcome to Chat App.</p>
+
+ <script src="/socket.io/socket.io.js"></script>
+ <script src="/js/index.js"></script>
+
+</body>
+</html>
+
+sysadmin@AcubeL020:/var/www/html/node-chat-app$ node server/server.js
+server is up on 4030
+New User Connected...
+{ To: 'raman@gmail.com', Text: 'Learn Socket.IO' }
+
+
+http://localhost:4030/
+{From: "winslet@example.com", Text: "Hello Winslet"}
+
+
+sudo fuser -k  3000/tcp 
+
+
+IO and Socket
+Phani · Lecture 108 · a year ago
+Hi Andrew,
+
+Can you please clarify difference between io.on() and socket.on() and the way these lines mean..
+
+var app=express();
+var server=http.createServer(app);
+var io=socketIO(server);
+
+
+
+io.on('connection',(socket)=>{
+console.log('New user connected');
+socket.on('disconnect',()=>{
+  console.log('User was DisConnected');
+});
+});
+
+
+
+
+
+Andrew — Instructor  · a year ago 
+Hey Phani,
+
+io.on lets us listen for server-wide events like new socket connections. The callback function we create is where we can setup events for that newly connected socket.
+
+socket.on lets us setup event handlers for the individual socket. This could be a custom event like "newMessage" or a built-in one like "disconnect".
+
+- Andrew
+
+Mark as helpful (9)
+DS
+Daniel  · 8 months ago 
+So basically, every new event is a new socket?
+
+Mark as helpful
+Andrew — Instructor  · 8 months ago 
+Nope. The events are all sent over the same socket!
+
+Mark as helpful (1)
+DS
+Daniel  · 8 months ago 
+Ok...so how can we have multiple sockets then? One socket for every new connection, maybe? Like for every new user?
+
+Mark as helpful
+Andrew — Instructor  · 8 months ago 
+I might have misunderstood your question.
+
+"Nope. The events are all sent over the same socket!"
+
+I was trying to say that an individual client and server communicate across a single socket. Each user gets their own connection to the server. So if you have 13 users, you'll have 13 sockets.
+
+Mark as helpful (4)
+DS
+Daniel  · 8 months ago 
+Ok, I got it now, thank you, Andrew!
+
+Mark as helpful
+HH
+Hester Liong Khing  · 7 months ago 
+Hai Andrew,
+
+
+
+from this line,
+
+var server=http.createServer(app);
+
+why we can pass variable app into createServer()? because from doc, I read that createServer accept 'function (req,res)' as parameter..
+
+hope u can clarify on that :D :D
+
+
+
+
+
+
+
+Mark as helpful
+Andrew — Instructor  · 7 months ago 
+We pass in app which is from express. This supports the same pattern (function with req and res) so we don't have to define it ourselves. 
+
+P.S. Please open a new question for new issues. This makes the Q&A easier to use and navigate.
+
+Mark as helpful (1)
+Andrea  · 7 months ago 
+@Andrew, could you please spend a couple more words here? I don't understand why I have to create my events on connect/connection, but can't listen to. I have to move outside of connect/connection callback and out there listen to other events.
+
+Makes sense to have a single socket per connection. It also makes sense to emit my events only after a connection has been established, but I don't understand why I can't listen.
+
+I'm sorry, I could just do that of course, but I'm trying to complete my mental model of it.
+
+Mark as helpful
+Andrew — Instructor  · 7 months ago 
+Hey Andrea,
+
+I'd love to clear that up. Are you saying the course code isn't working and you needed to restructure things to get it working? Or are you saying you just want some clarification as to why we need out custom event listeners inside the connection callback function?
+
+Mark as helpful
+Andrea  · 7 months ago 
+Everything's working perfectly, thank you :)
+
+I'm sorry if I haven't been clear enough. Kind of the second, mostly because on the server everything happens inside the io.on() callback. I establish a connection, get passed the socket object and only then I can attach my emit and on methods on it, right?
+
+On the client, I establish a connection and now I'm ready to eventually emit something. But I don't listen... I listen outside of the callback (it wouldn't even work inside the callback), and this is the point I'm not getting. Why is that?
+
+Mark as helpful
+Andrew — Instructor  · 7 months ago 
+This is because the client is just a single connection so it can access the socket directly. 
+
+On the server we have many connections, so we add the event lister inside the connection callback so we can do something for each one of them. The only place we have access to the socket is inside that callback. Otherwise the server wouldn't know which socket it should be working with.
