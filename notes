@@ -19,3 +19,236 @@ output:
 sysadmin@AcubeL020:/var/www/html/node-chat-app$ node server/server.js
 /var/www/html/node-chat-app/server../public
 /var/www/html/node-chat-app/public
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+creating two servers?
+Hayato · Lecture 107 · 8 months ago
+
+
+const app = express();
+const server = http.createServer(app);
+var io = socketIO(server)
+app.use(express.static(publicPath));
+ 
+server.listen(port, () => {
+    console.log(`server is up on port ${port}`);
+});
+I don't understand what it's doing. express() command call http.createServer() command internally? If so, this code creates two servers and one server wrap another server??? I don't understand what's going on.
+
+answer:
+Express will manually setup the http server if you don't. In this case we are setting up the server. Two servers are not being created.
+
+All this is done so we can attach Socket.io directly into our web server.
+. We also use express to serve up our static assets. 
+. There are no ties between express and socket.io.
+
+
+
+server.js
+const path=require('path');
+const publicPath=path.join(__dirname,'../public');
+const port=process.env.PORT || 4006;
+
+const express=require('express');
+const http=require('http');
+const socketIO=require('socket.io');
+
+
+var app=express();
+// var server=http.createServer((req,res)=>{
+
+// });
+
+    
+
+var server=http.createServer(app);
+var io=socketIO(server);
+//using io now we can communicate between client and server
+app.use(express.static(publicPath));
+
+
+//io.on:  lets us register an event listenner
+
+io.on('connection',(socket)=>{  //this socket argument is similar to we acces in index.html
+    //connection->makes a new connection.
+    console.log('New User Connected...');
+
+})
+//websocket is a persistent technology...i.e client and server both keeps communication cahnnels open
+//for as long as both of them want to, if the server shut down then client doent have choice
+//but client try to connect to server, thinking conneciton lost.
+
+
+
+
+//Basically Behind scene express uses 'http' server i.e http.createServer() whene we call app.listen
+// app.listen(port,()=>{
+//     console.log(`server is up on ${port}`);
+// })
+
+server.listen(port,()=>{
+    console.log(`server is up on ${port}`);
+})
+
+
+index.html
+<html>
+<head>
+ <meta charset="utf-8">
+</head>
+<body>
+ <p>Welcome to Chat App.</p>
+
+ <script src="/socket.io/socket.io.js"></script>
+<script>
+    var socket =io();//initiating a create from client to the server to open a 
+    //websocket and keep that connection open.
+
+
+    socket.on('connect',()=>{  //event fired
+        console.log('connected to server');
+    });
+
+    socket.on('disconnect',()=>{
+        console.log('disconnecte server.......');
+    })
+</script>
+</body>
+</html>
+
+
+http://localhost:4006/
+As we refresh the page we get following 
+
+sysadmin@AcubeL020:/var/www/html/node-chat-app$ node server/server.js
+server is up on 4006
+New User Connected...
+New User Connected...
+New User Connected...
+New User Connected...
+New User Connected...
+New User Connected...
+New User Connected...
+New User Connected...
+New User Connected...
+New User Connected...
+New User Connected...
+New User Connected...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+server.js
+const path=require('path');
+const publicPath=path.join(__dirname,'../public');
+const port=process.env.PORT || 4010;
+
+const express=require('express');
+const http=require('http');
+const socketIO=require('socket.io');
+
+
+var app=express();
+// var server=http.createServer((req,res)=>{
+
+// });
+
+    
+
+var server=http.createServer(app);
+var io=socketIO(server);
+//using io now we can communicate between client and server
+app.use(express.static(publicPath));
+
+
+//io.on:  lets us register an event listenner
+
+io.on('connection',(socket)=>{  //this socket argument is similar to we acces in index.html
+    //connection->makes a new connection.
+    console.log('New User Connected...');
+    socket.on('disconnect',(socket)=>{
+        console.log('User was disconnected....');
+    })
+});
+
+
+//websocket is a persistent technology...i.e client and server both keeps communication cahnnels open
+//for as long as both of them want to, if the server shut down then client doent have choice
+//but client try to connect to server, thinking conneciton lost.
+
+
+
+
+//Basically Behind scene express uses 'http' server i.e http.createServer() whene we call app.listen
+// app.listen(port,()=>{
+//     console.log(`server is up on ${port}`);
+// })
+
+server.listen(port,()=>{
+    console.log(`server is up on ${port}`);
+})
+
+
+
+index.html
+<html>
+<head>
+ <meta charset="utf-8">
+</head>
+<body>
+ <p>Welcome to Chat App.</p>
+
+ <script src="/socket.io/socket.io.js"></script>
+<script>
+    var socket =io();//initiating a create from client to the server to open a 
+    //websocket and keep that connection open.
+
+
+    socket.on('connect',()=>{  //event fired
+        console.log('connected to server');
+    });
+
+    socket.on('disconnect',()=>{
+        console.log('disconnecte server.......');
+    })
+</script>
+</body>
+</html>
+
+
+//when ever user closes the tab or refresh, we get user was disconnected msg as below
+sysadmin@AcubeL020:/var/www/html/node-chat-app$ node server/server.js
+server is up on 4010
+New User Connected...
+User was disconnected....
+New User Connected...
+User was disconnected....
+New User Connected...
+
+
+note:from above thing we can understand socket.io is as a two communication of client an server.
