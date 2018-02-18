@@ -1,38 +1,53 @@
-const path=require('path');
-const publicPath=path.join(__dirname,'../public');
-const port=process.env.PORT || 4050;
+const path = require('path');
+const http = require('http');
+const express = require('express');
+const socketIO = require('socket.io');
 
-const express=require('express');
-const http=require('http');
-const socketIO=require('socket.io');
+const {generateMessage, generateLocationMessage} = require('./utils/messages');
+const {isRealString} = require('./utils/validate');
+const publicPath = path.join(__dirname, '../public');
+const port = process.env.PORT || 8000;
+var app = express();
+var server = http.createServer(app);
+var io = socketIO(server);
 
-
-var app=express();
-var server=http.createServer(app);
-var io=socketIO(server);
-//using io now we can communicate between client and server
 app.use(express.static(publicPath));
 
+io.on('connection', (socket) => {
+  console.log('New user connected');
 
-//io.on:  lets us register an event listenner
+  socket.on('join', (params, callback) => {
+    if (!isRealString(params.name) || !isRealString(params.room)) {
+      callback('Name and room name are required.');
+    }
 
-io.on('connection',(socket)=>{  //this socket argument is similar to we acces in index.html
-    //connection->makes a new connection.
-    console.log('New User Connected...');
+    socket.join(params.room);
+    // socket.leave('The Office Fans');
 
-   socket.emit('newMessage',{  //custom event  //event emitter  //from server to client
-       From:'Raman',
-       Text:"Hello Winslet"
-   });
+    // io.emit -> io.to('The Office Fans').emit
+    // socket.broadcast.emit -> socket.broadcast.to('The Office Fans').emit
+    // socket.emit
 
-   socket.on('createMessage',(message)=>{ //custom event from client to server
-      console.log(message);
-   });
+    socket.emit('newMessage', generateMessage('Admin', 'Welcome to the chat app'));
+    socket.broadcast.to(params.room).emit('newMessage', generateMessage('Admin', `${params.name} has joined.`));
+    callback();
+  });
 
-    socket.on('disconnect',(socket)=>{
-        console.log('User was disconnected....');
-    })
+  socket.on('createMessage', (message, callback) => {
+    console.log('createMessage', message);
+    io.emit('newMessage', generateMessage(message.from, message.text));
+    callback();
+  });
+
+  socket.on('createLocationMessage', (coords) => {
+    io.emit('newLocationMessage', generateLocationMessage('Admin', coords.latitude, coords.longitude));
+  });
+
+  socket.on('disconnect', () => {
+    console.log('User was disconnected');
+  });
 });
-server.listen(port,()=>{
-    console.log(`server is up on ${port}`);
-})
+
+server.listen(port, () => {
+  console.log(`Server is up on ${port}`);
+});

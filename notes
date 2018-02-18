@@ -471,3 +471,154 @@ Andrew — Instructor  · 7 months ago
 This is because the client is just a single connection so it can access the socket directly. 
 
 On the server we have many connections, so we add the event lister inside the connection callback so we can do something for each one of them. The only place we have access to the socket is inside that callback. Otherwise the server wouldn't know which socket it should be working with.
+
+
+
+
+
+
+
+
+
+
+BroadCasting:
+BroadCasting is the term for a meeting and event to everybody but one specific
+user i m going to start.
+
+
+
+
+
+
+
+example:
+
+server.js
+const path=require('path');
+const publicPath=path.join(__dirname,'../public');
+const port=process.env.PORT || 4010;
+
+const express=require('express');
+const http=require('http');
+const socketIO=require('socket.io');
+const {generateMessage}=require('./utils/messages');
+
+var app=express();
+var server=http.createServer(app);
+var io=socketIO(server);
+//using io now we can communicate between client and server
+app.use(express.static(publicPath));
+
+
+//io.on:  lets us register an event listenner
+
+io.on('connection',(socket)=>{  //this socket argument is similar to we acces in index.html
+    //connection->makes a new connection.
+    console.log('New User Connected...');
+
+
+    socket.emit('newMessage',generateMessage('Admin','Welcome to chat app'));//from server to client who just joined//new connection
+    socket.broadcast.emit('newMessage',generateMessage('Admin','New User Joined'));/// from server to all client except who joined
+    socket.on('createMessage',(message)=>{ //custom event from client to server
+      console.log(message);
+      io.emit('newMessage',generateMessage(message.from,message.text));//to every one
+
+
+    //Below code sends to everybody except to the one who sent's(i.e except to this socket)
+    // socket.broadcast.emit('newMessage',{ //custom event from client to server
+    //     from: message.from,
+    //     text: message.text,
+    //     createdAt:new Date().getTime()
+    // });
+
+
+
+   });
+
+  
+
+
+    socket.on('disconnect',(socket)=>{
+        console.log('User was disconnected....');
+    })
+});
+server.listen(port,()=>{
+    console.log(`server is up on ${port}`);
+})
+
+
+index.js
+var socket =io();//initiating a create from client to the server to open a 
+//websocket and keep that connection open.
+
+
+socket.on('connect',function(){  //event fired  //if we use arrow funtion it will crash on mobile/in other device...
+ 
+    console.log('connected to server');
+    socket.emit('newUser',{
+        user:'Raman',
+        message:'Hello Kate'
+    });
+
+
+});
+
+socket.on('newMessage',function(message){  //event lintener
+   console.log(message);
+})
+
+socket.on('disconnect',function(){
+    console.log('disconnecte server.......');
+})
+
+
+utils/messages.js
+var generateMessage=(from,text)=>{
+   return {
+       from,
+       text,
+       createdAt:new Date().getTime()
+   }
+};
+
+module.exports={generateMessage}
+
+
+sysadmin@AcubeL020:/var/www/html/node-chat-app$ node server/server.js
+server is up on 4010
+New User Connected...
+New User Connected...
+
+
+
+http://localhost:4010/ tab1
+{from: "Admin", text: "Welcome to chat app", createdAt: 1518936546305}  
+
+http://localhost:4010/ tab2
+{from: "Admin", text: "Welcome to chat app", createdAt: 1518936540195}
+{from: "Admin", text: "New User Joined", createdAt: 1518936546305}  //when tab1 loads we will get this message.
+
+
+
+
+
+
+
+
+
+
+
+
+
+Mustache.js
+
+Either one would get the job done! I tend to prefer Mustache for the client and HBS for the server.
+
+Mustache is an open source logic-less template system developed for languages such as JavaScript, 
+Ruby, Python, PHP, and Java. You can grab a copy of the library by visiting the official page on GitHub.
+Mustache provides templates and views as the basis for creating dynamic templates. 
+Views contain the data to be included in the templates as JSON. Templates contain the presentation HTML
+or data with the template tags for including view data. Earlier, we mentioned mustache as logic-less.
+This means the templates will not contain any if-else conditions or for loops. Now, let’s get started 
+on mustache templates using a simple example.
+
