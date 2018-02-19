@@ -71,6 +71,17 @@ socket.on('disconnect',function(){
     console.log('disconnecte server.......');
 })
 
+
+socket.on('updateUserList',function(users){
+  console.log('UsersList',users);
+
+  var ol=jQuery('<ol></ol>');
+  users.forEach(function(user){
+      ol.append(jQuery('<li></li>').text(user));
+  });
+  jQuery('#users').html(ol);
+
+});
 socket.on('newLocationMessage',function(message){
   
     // var formattedTime=moment(message.createdAt).format('h:mm a');
@@ -98,7 +109,6 @@ $(document).on('submit','#message-form',function(e){
   
   var messageTextbox=$('#message');
   socket.emit('createMessage',{
-      from:'User',
       text:messageTextbox.val()
   },function(data){
       messageTextbox.val('');
@@ -121,7 +131,7 @@ locationButton.on('click',function(){
     navigator.geolocation.getCurrentPosition(function(position){
       //console.log(position);
   
-      locationButton.removeAttr('disabled').text('Send');
+      locationButton.removeAttr('disabled').text('Send Location');
 
       socket.emit('createLocationMessage',{
           lat:position.coords.latitude,

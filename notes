@@ -23,6 +23,24 @@ sysadmin@AcubeL020:/var/www/html/node-chat-app$ node server/server.js
 
 
 
+ES6 Classes;
+//ES6 class
+class Person {
+  constructor(name,age){
+     this.name=name;
+     this.age=age;
+  }
+  getUserDescription(){
+      return `${this.name} Jen is 1 year(s) old`;
+  }
+}
+
+var me=new Person('Raman',27);
+var description=me.getUserDescription();
+console.log(description);
+
+
+
 
 
 
